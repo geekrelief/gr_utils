@@ -1,6 +1,6 @@
 package gr.debug {
     public function traceMessage(_msg:*, _depth:int=1, _stackOffset:int=3):String {
-        CONFIG::debug {
+        CONFIG::gr_debug {
         var output:String = "";
         var args:String = "()";
         var nl:String = "\n";

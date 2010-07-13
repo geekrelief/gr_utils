@@ -12,7 +12,7 @@ package gr.display {
     import flash.utils.getQualifiedClassName;
     import flash.utils.getDefinitionByName;
     import gr.debug.atrace;
-	
+
 
     public class Rasterizer extends EventDispatcher {
 
@@ -27,18 +27,18 @@ package gr.display {
             } 
 
             if (_obj is Class) {
-				_obj = new _obj();
+                _obj = new _obj();
                 r = new Rasterizer(__Private.instance, _obj);
             }
 
             var className:String = getQualifiedClassName(_obj);
-			
-			if (className == 'flash.display::MovieClip') {
-				// if this is a movieclip with no name then we have to use the mc as the index
-				r = new Rasterizer(__Private.instance, _obj);
-				m_Rasterized[_obj] = r;
-			} else if ((_obj as MovieClip) != null) {
-				// this mc has a name so all instances of it can share the same bitmap data
+
+            if (className == 'flash.display::MovieClip') {
+                // if this is a movieclip with no name then we have to use the mc as the index
+                r = new Rasterizer(__Private.instance, _obj);
+                m_Rasterized[_obj] = r;
+            } else if ((_obj as MovieClip) != null) {
+                // this mc has a name so all instances of it can share the same bitmap data
                 var siblingr:Rasterizer = m_Rasterized[className];
                 r = new Rasterizer(__Private.instance, _obj, siblingr);
                 if(siblingr == null) {
@@ -47,16 +47,16 @@ package gr.display {
             } else {
                 throw new Error("Cannot rasterize "+className);
             }
-			
+
             return r;
         }
-		
-		public function forceStep():void {
-			for (var i:int = 1; i < mc.totalFrames + 1; ++i) {
-				mc.gotoAndStop(i);
-				enterFrame(null);
-			}
-		}
+
+        public function forceStep():void {
+            for (var i:int = 1; i < mc.totalFrames + 1; ++i) {
+                mc.gotoAndStop(i);
+                enterFrame(null);
+            }
+        }
 
         protected var m_rasteredFrameCount:int = 0;
         protected var m_rasteredFrames:Dictionary = new Dictionary();
@@ -72,7 +72,7 @@ package gr.display {
             for(var i:int = 1; i < mc.totalFrames+1; ++i) {
                 m_rasteredFrames[i] =  false;
             }
-			
+
             if(_r == null) {
                 m_bds = new Vector.<BitmapData>(mc.totalFrames, true);
                 m_bounds = new Vector.<Rectangle>(mc.totalFrames, true); 
@@ -95,13 +95,13 @@ package gr.display {
         public function enterFrame(e:Event):void {
             if (!m_rasteredFrames[mc.currentFrame]) {
                 var br:Rectangle = mc.getBounds(mc);
-				br.x *= mc.scaleX;
-				br.width *= mc.scaleX;
-				br.y *= mc.scaleY;
-				br.height *= mc.scaleY;
-				
+                br.x *= mc.scaleX;
+                br.width *= mc.scaleX;
+                br.y *= mc.scaleY;
+                br.height *= mc.scaleY;
+
                 var bd:BitmapData = new BitmapData(br.width + 1, br.height+1, true, 0);
-				bd.draw(mc, new Matrix(mc.scaleX, 0, 0, mc.scaleY, -br.x, -br.y));
+                bd.draw(mc, new Matrix(mc.scaleX, 0, 0, mc.scaleY, -br.x, -br.y));
                 m_bounds[mc.currentFrame-1] = br;
                 m_bds[mc.currentFrame-1] = bd;
 
@@ -117,10 +117,8 @@ package gr.display {
         protected function prepRaster():void {
             mc.removeEventListener(Event.ENTER_FRAME, enterFrame);
             m_rasteredFrames = null;
-            
-//            if (mc.stage != null) {
-                mc.addEventListener(Event.EXIT_FRAME, exitFrame);
-//            }
+
+            mc.addEventListener(Event.EXIT_FRAME, exitFrame);
             mc.addEventListener(Event.ADDED_TO_STAGE, addedToStage);
             mc.addEventListener(Event.REMOVED_FROM_STAGE, removedFromStage);
             dispatchEvent(new Event(RASTERIZED));
@@ -131,14 +129,15 @@ package gr.display {
         }
 
         protected function rasterizeFrame():void {
-            // need to replace the children for every render because flash recreates MovieClip children created on the timeline
+            // need to replace the children for every render because 
+            // flash recreates MovieClip children created on the timeline
             while(mc.numChildren > 0) {
                 mc.removeChild(mc.getChildAt(0));
             }
-           
+
             mc.addChild(bm);
-			bm.scaleX = 1 / mc.scaleX;
-			bm.scaleY = 1 / mc.scaleY;
+            bm.scaleX = 1 / mc.scaleX;
+            bm.scaleY = 1 / mc.scaleY;
 
             bm.bitmapData = m_bds[mc.currentFrame - 1];
             bm.x = m_bounds[mc.currentFrame - 1].x / mc.scaleX;

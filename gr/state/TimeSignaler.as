@@ -28,7 +28,7 @@ package gr.state {
             return tp;
         }
 
-        public function cancelPostIn(_tp:TimePost):void {
+        public function cancelPostIn(_tp:TimePost):TimePost {
             if (_tp == null) {
                 throw new Error("Cannot cancelPostIn on null TimePost.");
             }
@@ -37,6 +37,8 @@ package gr.state {
             if(i != -1) {
                 m_inTimePosts.splice(i, 1);
             }
+            
+            return null;
         }
 
         // posts a signal every time interval, to cancel need to cancelPostEvery using the returned TimePost
@@ -46,7 +48,7 @@ package gr.state {
             return tp;
         }
 
-        public function cancelPostEvery(_tp:TimePost):void {
+        public function cancelPostEvery(_tp:TimePost):TimePost {
             if (_tp == null) {
                 throw new Error("Cannot cancelPostEvery on null TimePost.");
             }
@@ -55,6 +57,8 @@ package gr.state {
             if(i != -1) {
                 m_everyTimePosts.splice(i, 1);
             }
+            
+            return null;
         }
 
             protected function onTimer(_e:TimerEvent):void {

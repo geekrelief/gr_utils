@@ -1,8 +1,8 @@
 package gr.state {
     dynamic public class Signal {
         
-        public var to:Hsm;
-        public var from:Hsm;
+        public var to:*;
+        public var from:*;
 
         public static var EMPTY:Signal = new Signal("EMPTY", 0);
         public static var INIT:Signal = new Signal("INIT", 1);
@@ -33,7 +33,7 @@ package gr.state {
         }
 
         public function toString():String {
-            return "Signal " + m_name + ", "+ m_id;
+            return "(Signal - " + m_name + " : " + m_id+ ")";
         }
     }
 }

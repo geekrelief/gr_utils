@@ -3,31 +3,31 @@ package gr.state {
     import gr.debug.atrace;
     import flash.utils.Dictionary;
 
-    public class Hsm {
+    public class Hsm extends Fsm {
 
-        public function Hsm(_initialState:Function) {
-            m_state = s_top;
-            m_initState = _initialState;
+        public function Hsm(_initState:Function) {
+            super(_initState);
 
-            m_sindex = new Dictionary();
-            m_sindex[s_top] = 's_top';
-            
             m_pathCache = new Dictionary();
         }
 
-        public static var RET_HANDLED:int = 0;
-        public static var RET_PARENT:int = 1;
-        public static var RET_TRAN:int = 2;
+        include "inc/ret.inc"
+        include "inc/signals.inc"
+        include "inc/sindex_def.inc"
 
-        protected var m_initState:Function;
-        protected var m_state:Function;
-
-        protected var m_sindex:Dictionary;
         protected var m_pathCache:Dictionary;
 
-        public function init():void {
+        override public function init(_sindexTarget:* = null):void {
 
-            if(m_initState(Signal.INIT) != RET_TRAN) { // set the initial transition
+            CONFIG::gr_debug {
+                if(_sindexTarget != null) {
+                    sindexTarget = _sindexTarget;
+                }
+            }
+
+            include "inc/sindex_init.inc"
+
+            if(m_initState(SIG_INIT) != RET_TRAN) { // set the initial transition
                 // top most initial transition must be taken
                 throw new Error("Initial State must transition.");
             }
@@ -38,32 +38,28 @@ package gr.state {
             do {
 
                 path[0] = m_state;
-                m_state(Signal.EMPTY);
+                m_state(SIG_EMPTY);
                 var pathdx:int = 0;
 
                 while(m_state != top) {
                     path[++pathdx] = m_state;
-                    m_state(Signal.EMPTY);
+                    m_state(SIG_EMPTY);
                 }
 
                 m_state = path[0];
                 // enter from parents
                 do {
-                    path[pathdx](Signal.ENTER);
+                    path[pathdx](SIG_ENTER);
                 } while (--pathdx >= 0)
 
                 top = path[0];
 
-            } while(top(Signal.INIT) == RET_TRAN) // loop on initial transitions
+            } while(top(SIG_INIT) == RET_TRAN) // loop on initial transitions
 
             m_state = top;
         }
 
-        public function s_top(_s:Signal):int {
-            return RET_HANDLED; // ignore anything reaching the top
-        }
-
-        public function dispatch(_s:Signal):void {
+        override public function dispatch(_s:Signal):void {
             var res:int;
 
             var cur:Function = m_state;
@@ -77,12 +73,14 @@ package gr.state {
                 var target:Function = m_state;
 
                 if(cur == target) {
-                    cur(Signal.EXIT);
-                    cur(Signal.ENTER);
+                    cur(SIG_EXIT);
+                    cur(SIG_ENTER);
                     return;
                 }
 
-                //atrace("transition request from cur: "+m_sindex[cur]+" to "+m_sindex[target]);
+                CONFIG::gr_debug {
+                    atrace("on " + _s + " transition from: " + SIndex[cur]+" to: " + SIndex[target]);
+                }
 
                 // determine the LCA for the cur and target m_state
                 // get the path for the cur state
@@ -91,7 +89,7 @@ package gr.state {
                     cpath = m_pathCache[cur] = [cur]; 
 
                     while (cur != s_top) {
-                        cur(Signal.EMPTY);
+                        cur(SIG_EMPTY);
                         cur = cpath[cpath.length] = m_state;
                     }
                 }
@@ -103,7 +101,7 @@ package gr.state {
                     tpath = m_pathCache[target] = [target];
 
                     while (cur != s_top) {
-                        cur(Signal.EMPTY);
+                        cur(SIG_EMPTY);
                         cur = tpath[tpath.length] = m_state;
                     }
                 }
@@ -118,32 +116,32 @@ package gr.state {
                 // perform exits
                 var exitdx:int = 0;
                 while(exitdx <= cdx) {
-                    cpath[exitdx](Signal.EXIT);
+                    cpath[exitdx](SIG_EXIT);
                     ++exitdx;
                 }
 
                 // perform enters
                 var enterdx:int = tdx;
                 while(enterdx >= 0) {
-                    tpath[enterdx](Signal.ENTER);
+                    tpath[enterdx](SIG_ENTER);
                     --enterdx;
                 }
-            
+
                 // drill into target hierarchy
                 m_state = tpath[0];
                 cur = m_state; 
-                while(cur(Signal.INIT) == RET_TRAN) {
+                while(cur(SIG_INIT) == RET_TRAN) {
                     // determine substate path, cur is an ancestor of m_state now
                     var ipath:Array = [m_state];
                     var ip:int = 0;
-                    m_state(Signal.EMPTY);
+                    m_state(SIG_EMPTY);
                     while(m_state != cur) {
                         ipath[++ip] = m_state;
-                        m_state(Signal.EMPTY);
+                        m_state(SIG_EMPTY);
                     }
                     // enter paths
                     do {
-                        ipath[ip](Signal.ENTER);
+                        ipath[ip](SIG_ENTER);
                         --ip;
                     } while(ip >= 0)
 
@@ -154,29 +152,10 @@ package gr.state {
             m_state = cur;
         }
 
-        // asynchronous signal dispatching
-        public function post(_s:Signal, _to:Hsm = null):void {
-            if(_to == null) {
-                _s.to = this;
-            }
-            InDispatcher.post(_s);
-        }
-
-        // return this a signal is handled
-        public function handled():int {
-            return RET_HANDLED;
-        }
-
         // return this to set the parent
-        public function hparent(_parent:Function):int {
+        public function sparent(_parent:Function):int {
             m_state = _parent;
             return RET_PARENT;
-        }
-
-        // return this to transition
-        public function htran(_target:Function):int {
-            m_state = _target;
-            return RET_TRAN;
         }
     }
 }

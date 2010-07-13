@@ -62,7 +62,7 @@ package gr.state {
         public function dispatch(_s:Signal):void {
             // posting directly first
             if(_s.to != null) {
-                (_s.to as Hsm).dispatch(_s);
+                (_s.to as Fsm).dispatch(_s);
                 return;
             }
 
