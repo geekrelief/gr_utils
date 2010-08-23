@@ -1,5 +1,7 @@
 package gr.utils
 {
+    import flash.utils.getTimer;
+
 	public class StringUtils
 	{
         public static function numberFormat( _num:Number, _decimalPlace:uint = 0 ):String {
@@ -56,6 +58,51 @@ package gr.utils
 			
 			return result;
 		}
+
+        // Takes milliseconds and formats into HH:MM:SS:mmm hours:minutes:seconds:milliseconds, (truncates the hours)
+        public static function formatMS(_ms:int = -1):String {
+            var time:int = _ms;
+            if (time < 0) {
+                time = getTimer();
+            }
+            var ms:int = time % 1000;
+            var secs:int = int(time / 1000);
+            var mins:int = int(secs / 60);
+            var hours:int = int(mins / 60);
+            secs %= 60;
+            mins %= 60;
+            hours %= 24;
+            return printf("%02d:%02d:%02d:%03d", hours, mins, secs, ms);
+        }
+
+        // converts a string in HH:MM:SS:mmm format to milliseconds (the digits don't have to have leading 0s if less than 10)
+        public static function toMS(_formatted:String):int {
+            var time:Array = _formatted.split(":");
+            CONFIG::gr_debug {
+                if (time.length != 4) {
+                    throw new Error("Cannot parse: "+_formatted);
+                }
+            }
+
+            var hours:Number = parseFloat(time[0]);
+            var mins:Number = parseFloat(time[1]);
+            var secs:Number = parseFloat(time[2]);
+            var ms:Number = parseFloat(time[3]);
+
+            CONFIG::gr_debug {
+                if (isNaN(hours) || hours < 0 || hours > 23) {
+                    throw new Error("Out of range (0-23) hours: "+hours+" in "+_formatted);
+                } else if (isNaN(mins) || mins < 0 || mins > 59) {
+                    throw new Error("Out of range (0-59) mins: "+mins+" in "+_formatted);
+                } else if (isNaN(secs) || secs < 0 || secs > 59) {
+                    throw new Error("Out of range (0-59) secs: "+secs+" in "+_formatted);
+                } else if (isNaN(ms) || ms < 0 || ms > 999) {
+                    throw new Error("Out of range (0-999) ms: "+ms+" in "+_formatted);
+                }
+            }
+
+            return (((((hours * 60) + mins) * 60) + secs) * 1000) + ms;
+        }
 
 		public static function secondsToString( _time:int ):String {
 			var result:String = "";

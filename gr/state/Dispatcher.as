@@ -25,6 +25,14 @@ package gr.state {
             m_timer.addEventListener(TimerEvent.TIMER, onTimer);
         }
 
+        public function destroy():void {
+            m_timer.stop();
+            m_timer.removeEventListener(TimerEvent.TIMER, onTimer);
+            m_timer = null;
+            m_subscribers = null;
+            m_signals = null;
+        }
+
         public function subscribe(_h:Hsm, _s:Signal):void {
             // subscribe to a signal
             if (m_subscribers[_s.id] == null) {

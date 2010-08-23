@@ -22,6 +22,14 @@ package gr.state {
             m_timer.start();
         }
 
+        public function destroy():void {
+            m_timer.stop();
+            m_timer.removeEventListener(TimerEvent.TIMER, onTimer);
+            m_timer = null;
+            m_inTimePosts = null;
+            m_everyTimePosts = null;
+        }
+
         public function postIn(_s:Signal, _time:int):TimePost {
             var tp:TimePost = new TimePost(_s, _time);
             m_inTimePosts.push(tp);
@@ -62,6 +70,7 @@ package gr.state {
         }
 
             protected function onTimer(_e:TimerEvent):void {
+
                 // check the when property for each of the 'in' and 'every' signals
                 var time:int = getTimer();
                 var elapsed:int;
